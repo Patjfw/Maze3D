@@ -19,6 +19,21 @@
   <div id="container">
     <canvas id="mazeCanvas" width="600px" height="600px"></canvas>
   </div>
+  <div>
+    <label>迷宫构建方式(Choose the way to build the maze):</label>
+    <select>
+      <option selected="selected">预设(default maze)</option>
+      <option>算法构建(built by algorithm)</option>
+    </select>
+    <label>算法(algorithm to solve the maze)</label>
+    <select>
+      <option selected="selected">BFS</option>
+      <option>DFS</option>
+      <option>A*</option>
+    </select>
+    <button id="generate">生成</button>
+    <button id="solve">解决</button>
+  </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/88/three.min.js"></script>
   <script src="stat.min.js"></script>
   <script src="maze3d.js"></script>

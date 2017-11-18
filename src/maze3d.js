@@ -43,7 +43,7 @@ class Point {
 }
 
 let validatePos = function (maze, pos) {
-  if(maze[pos.x][pos.y] === 1){
+  if(maze[pos.y][pos.x] === 1){
     return true;
   }else{
     return false;
@@ -59,6 +59,8 @@ let backTracking = function(point){
   return trackingArr;
 }
 
+let visitedTrace = [];
+
 let BFS = function(maze){
   // for visited
   var copiedMaze = JSON.parse(JSON.stringify(maze.maze));
@@ -67,7 +69,8 @@ let BFS = function(maze){
 
   while(queue.length !== 0){
     var point = queue.shift();
-    copiedMaze[point.x][point.y] = 0
+    copiedMaze[point.y][point.x] = 0
+    visitedTrace.push({x:point.x, y:point.y});
     if(point.x === maze.endPoint.x && point.y === maze.endPoint.y){
       console.log("BFS, exit is reached")
       return point;
@@ -86,6 +89,17 @@ let BFS = function(maze){
 
 var endPoint = BFS(sampleMaze.sample1)
 var path = backTracking(endPoint);
+let maze
 
-let maze = maze3D("mazeCanvas", sampleMaze.sample1);
-maze.followThePath(path)
+let solveBtn = document.getElementById('solve');
+let generateBtn = document.getElementById('generate');
+
+generateBtn.addEventListener('click', function(){
+  maze = maze3D("mazeCanvas", sampleMaze.sample1);
+});
+
+solveBtn.addEventListener('click', function(){
+  maze.fixTheCamera();
+  maze.drawTrace(visitedTrace);
+  maze.followThePath(path)
+})

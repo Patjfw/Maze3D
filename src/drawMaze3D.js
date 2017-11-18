@@ -2,6 +2,8 @@ export default function(canvas, mazeData){
   const ZOOM_MIN = 3;
   const ZOOM_MAX = 30;
   const WHEEL_DELTA = 288;
+  const TRACE_INTERVAL = 50;
+  const MOTION_INTERVAL = 80;
 
   //object, reference: https://jsfiddle.net/MadLittleMods/n6u6asza/
   const boxGeo = new THREE.BoxGeometry(1, 1, 1);
@@ -9,9 +11,9 @@ export default function(canvas, mazeData){
 
   let raq;
   let canvasDom, renderer, scene, camera;
-  let woodTexture, boxMaterial, panelMaterial, startPanelMaterial, endPanelMaterial, ballMaterial;
-  let group, ball;
-  let isDragging = false;
+  let woodTexture, boxMaterial, panelMaterial, startPanelMaterial, endPanelMaterial, tracePanelMaterial, ballMaterial, lineMaterial;
+  let group, wallGroup, panelGroup, ball;
+  let isDragging = false, controllable = true;
   let previousMousePosition = {
       x: 0,
       y: 0
@@ -56,11 +58,26 @@ export default function(canvas, mazeData){
       opacity: 0.8
     });
 
+    tracePanelMaterial = new THREE.MeshBasicMaterial({
+      color: 0xff9a97,
+      transparent: true,
+      opacity: 0.5
+    });
+
     ballMaterial = new THREE.MeshBasicMaterial({
       color: 0xff7500
     });
 
+    lineMaterial = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      linewidth: 0.4
+    });
+
     group = new THREE.Group();
+    wallGroup = new THREE.Group();
+    panelGroup = new THREE.Group();
+    group.add(wallGroup);
+    group.add(panelGroup);
   }
 
   function buildScene(){
@@ -77,7 +94,7 @@ export default function(canvas, mazeData){
           cube.position.x = xPos
           cube.position.y = yPos;
 
-          group.add(cube);
+          wallGroup.add(cube);
         }
         let panel = new THREE.Mesh(panelGeo, panelMaterial);
         if(i === mazeData.startPoint.y && j === mazeData.startPoint.x){
@@ -91,8 +108,9 @@ export default function(canvas, mazeData){
         panel.position.x = xPos;
         panel.position.y = yPos;
         panel.position.z = -0.6;
+        panel.name = i*mazeData.maze[0].length+j
 
-        group.add(panel)
+        panelGroup.add(panel)
       }
     }
 
@@ -101,39 +119,45 @@ export default function(canvas, mazeData){
 
   function bindEvent(){
     renderer.domElement.addEventListener('mousedown', function(e) {
-      isDragging = true;
+      if(controllable){
+        isDragging = true;
+      }
     })
     renderer.domElement.addEventListener('mousemove', function(e) {
-      if(isDragging) {
-        var deltaMove = {
-          x: e.offsetX-previousMousePosition.x,
-          y: e.offsetY-previousMousePosition.y
+      if(controllable){
+        if(isDragging) {
+          var deltaMove = {
+            x: e.offsetX-previousMousePosition.x,
+            y: e.offsetY-previousMousePosition.y
+          };
+
+          var deltaRotationQuaternion = new THREE.Quaternion()
+                .setFromEuler(new THREE.Euler(
+                  toRadians(deltaMove.y * 1),
+                  toRadians(deltaMove.x * 1),
+                  0,
+                  'XYZ'
+                ));
+
+          group.quaternion.multiplyQuaternions(deltaRotationQuaternion, group.quaternion);
+        }
+
+        previousMousePosition = {
+          x: e.offsetX,
+          y: e.offsetY
         };
-
-        var deltaRotationQuaternion = new THREE.Quaternion()
-              .setFromEuler(new THREE.Euler(
-                toRadians(deltaMove.y * 1),
-                toRadians(deltaMove.x * 1),
-                0,
-                'XYZ'
-              ));
-
-        group.quaternion.multiplyQuaternions(deltaRotationQuaternion, group.quaternion);
       }
-
-      previousMousePosition = {
-        x: e.offsetX,
-        y: e.offsetY
-      };
     });
     /* */
 
     renderer.domElement.addEventListener('mousewheel', function(e) {
-      if(camera.position.z >= ZOOM_MIN && camera.position.z <= ZOOM_MAX){
+      if(controllable){
+        if(camera.position.z >= ZOOM_MIN && camera.position.z <= ZOOM_MAX){
 
-        camera.position.z += e.deltaY / WHEEL_DELTA;
-        camera.position.z < ZOOM_MIN ? camera.position.z = ZOOM_MIN : 1;
-        camera.position.z > ZOOM_MAX ? camera.position.z = ZOOM_MAX : 1;
+          camera.position.z += e.deltaY / WHEEL_DELTA;
+          camera.position.z < ZOOM_MIN ? camera.position.z = ZOOM_MIN : 1;
+          camera.position.z > ZOOM_MAX ? camera.position.z = ZOOM_MAX : 1;
+        }
       }
     });
 
@@ -148,10 +172,44 @@ export default function(canvas, mazeData){
     raq = window.requestAnimationFrame(render);
   }
 
+
+
   init();
   buildScene();
   bindEvent();
   render();
+
+  function drawPathLine(path) {
+    let pathData = path;
+
+    var lineGeometry = new THREE.BufferGeometry();
+    var positions = new Float32Array(pathData.length * 3);
+
+    lineGeometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+    var line = new THREE.Line(lineGeometry, lineMaterial)
+    var drawCount = 0; // draw the first 2 points, only
+    lineGeometry.setDrawRange( 0, drawCount )
+    var index = 0;
+    for(var data of pathData){
+      positions[index++] = data.x - mazeData.maze[0].length/2 + 1/2;
+      positions[index++] = mazeData.maze.length-1-data.y - mazeData.maze.length/2 + 1/2;
+      positions[index++] = 0.5;
+    }
+
+	  lineGeometry.addAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+    group.add(line)
+    console.log(positions)
+    let motionInterval = setInterval(() => {
+      ball.position.x = positions[drawCount*3];
+      ball.position.y = positions[drawCount*3+1];
+      drawCount++;
+
+	    lineGeometry.setDrawRange( 0, drawCount )
+      if(drawCount === path.length){
+        clearInterval(motionInterval);
+      }
+    }, MOTION_INTERVAL)
+  }
 
   //tools
   function toRadians(angle) {
@@ -171,8 +229,35 @@ export default function(canvas, mazeData){
   });
 
   return {
+    fixTheCamera () {
+      console.log(group)
+      group.rotation.x = 0;
+      group.rotation.y = 0;
+      group.rotation.z = 0;
+
+      camera.position.z = 25;
+      controllable = false;
+    },
+    drawTrace (trace) {
+      console.log(`You visited ${trace.length} nodes`)
+      let cur = 1;
+      let len = trace.length-1;
+      let interval = setInterval(function(){
+        let posName = trace[cur].x + trace[cur].y*mazeData.maze[0].length;
+        let curPanel = panelGroup.children.find((item)=>{
+          return item.name === posName
+        })
+        curPanel.material = tracePanelMaterial;
+        cur++;
+        if(cur === len){
+          clearInterval(interval);
+        }
+      }, TRACE_INTERVAL);
+    },
     followThePath (path) {
+      console.log(`The path is ${path.length} nodes long`)
       console.log(path)
+      drawPathLine(path)
     },
     rebuildScene (maze) {
 
