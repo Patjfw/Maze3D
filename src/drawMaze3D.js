@@ -198,7 +198,7 @@ export default function(canvas, mazeData){
 
 	  lineGeometry.addAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
     group.add(line)
-    console.log(positions)
+
     let motionInterval = setInterval(() => {
       ball.position.x = positions[drawCount*3];
       ball.position.y = positions[drawCount*3+1];
@@ -223,40 +223,82 @@ export default function(canvas, mazeData){
   //stats
   var stats=new Stats();
   document.body.appendChild(stats.dom);
-  requestAnimationFrame(function loop(){
+  var statsMonitor = requestAnimationFrame(function loop(){
     stats.update();
     requestAnimationFrame(loop)
   });
 
   return {
     fixTheCamera () {
-      console.log(group)
-      group.rotation.x = 0;
-      group.rotation.y = 0;
-      group.rotation.z = 0;
+      return new Promise(function(resolve, reject){
+        controllable = false;
+        var dx = group.rotation.x - 0;
+        var dy = group.rotation.y - 0;
+        var dz = group.rotation.z - 0;
+        var dcamera = camera.position.z - 25;
 
-      camera.position.z = 25;
-      controllable = false;
+        let rotateToOrigin = requestAnimationFrame(function loop(){
+          group.rotation.x -= dx/60;
+          group.rotation.y -= dy/60;
+          group.rotation.z -= dz/60;
+
+          camera.position.z -= dcamera/90;
+          //console.log(group.rotation.x, group.rotation.y, group.rotation.z, camera.position.z)
+          if(Math.abs(group.rotation.x) < 0.1){
+            group.rotation.x = 0;
+          }
+
+          if(Math.abs(group.rotation.y) < 0.1){
+            group.rotation.y = 0;
+          }
+
+          if(Math.abs(group.rotation.z) < 0.1){
+            group.rotation.z = 0;
+          }
+
+          if(Math.abs(camera.position.z - 25) < 0.5){
+            camera.position.z = 25
+          }
+
+
+          if(Math.abs(group.rotation.x) < 0.1 &&
+             Math.abs(group.rotation.y) < 0.1 &&
+             Math.abs(group.rotation.z) < 0.1 &&
+             Math.abs(camera.position.z - 25) < 0.5
+          ){
+            group.rotation.x = 0;
+            group.rotation.y = 0;
+            group.rotation.z = 0;
+            camera.position.z = 25;
+            window.cancelAnimationFrame(rotateToOrigin)
+            resolve("camera reset done")
+          }else{
+            requestAnimationFrame(loop)
+          }
+        })
+      })
     },
     drawTrace (trace) {
-      console.log(`You visited ${trace.length} nodes`)
-      let cur = 1;
-      let len = trace.length-1;
-      let interval = setInterval(function(){
-        let posName = trace[cur].x + trace[cur].y*mazeData.maze[0].length;
-        let curPanel = panelGroup.children.find((item)=>{
-          return item.name === posName
-        })
-        curPanel.material = tracePanelMaterial;
-        cur++;
-        if(cur === len){
-          clearInterval(interval);
-        }
-      }, TRACE_INTERVAL);
+      return new Promise(function(resolve, reject){
+        console.log(`You visited ${trace.length} nodes`)
+        let cur = 1;
+        let len = trace.length-1;
+        let interval = setInterval(function(){
+          let posName = trace[cur].x + trace[cur].y*mazeData.maze[0].length;
+          let curPanel = panelGroup.children.find((item)=>{
+            return item.name === posName
+          })
+          curPanel.material = tracePanelMaterial;
+          cur++;
+          if(cur === len){
+            clearInterval(interval);
+            resolve("trace done")
+          }
+        }, TRACE_INTERVAL);
+      })
     },
     followThePath (path) {
       console.log(`The path is ${path.length} nodes long`)
-      console.log(path)
       drawPathLine(path)
     },
     rebuildScene (maze) {
