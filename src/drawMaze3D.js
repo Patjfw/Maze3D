@@ -1,4 +1,4 @@
-export default function(canvas, mazeData){
+export default function(canvas, maze){
   const ZOOM_MIN = 3;
   const ZOOM_MAX = 30;
   const WHEEL_DELTA = 288;
@@ -9,6 +9,7 @@ export default function(canvas, mazeData){
   const boxGeo = new THREE.BoxGeometry(1, 1, 1);
   const panelGeo = new THREE.BoxGeometry(1, 1, 0.2);
 
+  let mazeData = maze;
   let raq;
   let canvasDom, renderer, scene, camera;
   let woodTexture, boxMaterial, panelMaterial, startPanelMaterial, endPanelMaterial, tracePanelMaterial, ballMaterial, lineMaterial;
@@ -19,7 +20,8 @@ export default function(canvas, mazeData){
       y: 0
   };
 
-  function init() {
+  function init(maze) {
+    mazeData = maze;
     canvasDom = document.getElementById(canvas);
     renderer = new THREE.WebGLRenderer({
       canvas: canvasDom
@@ -76,6 +78,7 @@ export default function(canvas, mazeData){
     group = new THREE.Group();
     wallGroup = new THREE.Group();
     panelGroup = new THREE.Group();
+    panelGroup.name = "panel";
     group.add(wallGroup);
     group.add(panelGroup);
   }
@@ -83,6 +86,7 @@ export default function(canvas, mazeData){
   function buildScene(){
     var ballGeo = new THREE.SphereGeometry(0.5,20,20);
     ball = new THREE.Mesh(ballGeo, ballMaterial);
+    ball.name = "ball";
 
     // the scene's coordinate is different from canvas
     for(let i = mazeData.maze.length-1; i >= 0; i--){
@@ -97,18 +101,21 @@ export default function(canvas, mazeData){
           wallGroup.add(cube);
         }
         let panel = new THREE.Mesh(panelGeo, panelMaterial);
+        panel.position.x = xPos;
+        panel.position.y = yPos;
+        panel.position.z = -0.6;
+        panel.name = i*mazeData.maze[0].length+j
+
         if(i === mazeData.startPoint.y && j === mazeData.startPoint.x){
+          panel.name = "startPoint";
           panel.material = startPanelMaterial;
           ball.position.x = xPos;
           ball.position.y = yPos;
           group.add(ball);
         }else if(i === mazeData.endPoint.y && j === mazeData.endPoint.x){
+          panel.name = "endPoint";
           panel.material = endPanelMaterial;
         }
-        panel.position.x = xPos;
-        panel.position.y = yPos;
-        panel.position.z = -0.6;
-        panel.name = i*mazeData.maze[0].length+j
 
         panelGroup.add(panel)
       }
@@ -173,11 +180,11 @@ export default function(canvas, mazeData){
   }
 
 
-
-  init();
+  init(maze);
   buildScene();
   bindEvent();
   render();
+
 
   function drawPathLine(path) {
     let pathData = path;
@@ -187,6 +194,7 @@ export default function(canvas, mazeData){
 
     lineGeometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
     var line = new THREE.Line(lineGeometry, lineMaterial)
+    line.name="line"
     var drawCount = 0; // draw the first 2 points, only
     lineGeometry.setDrawRange( 0, drawCount )
     var index = 0;
@@ -301,8 +309,21 @@ export default function(canvas, mazeData){
       console.log(`The path is ${path.length} nodes long`)
       drawPathLine(path)
     },
-    rebuildScene (maze) {
+    rebuildScene () {
+      group.remove(scene.getObjectByName("line", true));
+      for(let child of panelGroup.children){
+        if(child.name === "startPoint"){
+          ball.position.x = child.position.x;
+          ball.position.y = child.position.y;
+          continue;
+        }
 
+        if(child.name === "endPoint"){
+          continue
+        }
+
+        child.material = panelMaterial
+      }
     }
   }
 }

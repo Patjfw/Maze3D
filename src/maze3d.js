@@ -89,6 +89,7 @@ let backTracking = function(point){
 let visitedTrace = [];
 
 let search = function(maze, type){
+  visitedTrace = [];
   // for visited
   var copiedMaze = JSON.parse(JSON.stringify(maze.maze));
   var queue = [];
@@ -123,6 +124,7 @@ let calManhattanDistance = function(p1, p2){
 }
 
 let astar = function(maze){
+  visitedTrace = [];
   // let copiedMaze = JSON.parse(JSON.stringify(maze.maze));
   let openList = [];
   let closedList = [];
@@ -197,6 +199,7 @@ solveBtn.addEventListener('click', function(){
     }
 
     path = backTracking(endPoint);
+    maze.rebuildScene();
     maze.fixTheCamera().then(function(){
       maze.drawTrace(visitedTrace).then(function(){
         maze.followThePath(path)
