@@ -179,7 +179,7 @@ let astar = function(maze){
   }
 }
 
-let DFSMazeGenerator = function(size=33){
+let DFSMazeGenerator = function(perfect=true, size=33, deleteNum=20){
   let mazeData = [];
   for (let i = 0; i < size; i++){
     mazeData[i] = []
@@ -242,7 +242,7 @@ let DFSMazeGenerator = function(size=33){
   }
 
   function setEntranceExit(mazeData){
-    let minDis = Math.round(size*0.6)
+    let minDis = Math.round(size*1.2)
     function setPoint() {
       let tmpX = Math.floor(Math.random()*(size-2)) +1;
       let tmpY = Math.floor(Math.random()*(size-2)) +1;
@@ -263,6 +263,18 @@ let DFSMazeGenerator = function(size=33){
     }
     return [entrance, exit]
   }
+
+  if(perfect === false){
+    while(deleteNum>0){
+      let tmpX = Math.floor(Math.random()*(size-2)) +1;
+      let tmpY = Math.floor(Math.random()*(size-2)) +1;
+      if(mazeData[tmpY][tmpX] === 0){
+        mazeData[tmpY][tmpX] = 1
+        deleteNum --;
+      }
+    }
+  }
+
   var points = setEntranceExit(mazeData)
   return {
     maze: mazeData,
@@ -283,8 +295,15 @@ let selectedAlgo = document.getElementById("algorithm");
 generateBtn.addEventListener('click', function(){
   if(selectedMaze.value === 'default'){
     usedMap = sampleMaze.sample1;
-  }else if(selectedMaze.value === 'dfs'){
-    usedMap = DFSMazeGenerator();
+  }else if(selectedMaze.value === 'perfect'){
+    usedMap = DFSMazeGenerator(true);
+  }else if(selectedMaze.value === 'braid'){
+    usedMap = DFSMazeGenerator(false);
+  }
+
+  if(maze){
+    maze.cleanScene();
+    maze = null;
   }
   maze = maze3D("mazeCanvas", usedMap);
 });

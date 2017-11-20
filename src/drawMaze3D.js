@@ -20,6 +20,8 @@ export default function(canvas, maze){
       y: 0
   };
 
+
+
   function init(maze) {
     mazeData = maze;
     canvasDom = document.getElementById(canvas);
@@ -325,6 +327,11 @@ export default function(canvas, maze){
         }
 
         child.material = panelMaterial
+      }
+    },
+    cleanScene () {
+      while(scene.children.length > 0){
+          scene.remove(scene.children[0]); 
       }
     }
   }
