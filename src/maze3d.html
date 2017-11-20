@@ -6,24 +6,17 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Maze3D</title>
   <style>
-    #transform{
-      text-align: center;
-      /*transform: matrix(1,0,0,-1,0,1);*/
-      transform: matrix(-1,0,0,1,0,0);
-      /*transform: rotateY(180deg);*/
-    }
   </style>
 </head>
 <body>
-  <div id="transform">111222333</div>
   <div id="container">
     <canvas id="mazeCanvas" width="600px" height="600px"></canvas>
   </div>
   <div>
     <label>迷宫构建方式(Choose the way to build the maze):</label>
-    <select>
-      <option selected="selected">预设(default maze)</option>
-      <option>算法构建(built by algorithm)</option>
+    <select id="selectedMaze">
+      <option selected="selected" value="default">预设(default maze)</option>
+      <option value="dfs">算法构建(DFS)</option>
     </select>
     <label>算法(algorithm to solve the maze)</label>
     <select id="algorithm">

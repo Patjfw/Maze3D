@@ -35,8 +35,10 @@ export default function(canvas, maze){
     scene.add(camera);
 
     THREE.ImageUtils.crossOrigin = '';
-    woodTexture = THREE.ImageUtils.loadTexture('http://i.imgur.com/CEGihbB.gif');
-    woodTexture.anisotropy = renderer.getMaxAnisotropy();
+    let textureLoader = new THREE.TextureLoader();
+    textureLoader.crossOrigin = 'anonymous'
+    woodTexture = textureLoader.load('http://i.imgur.com/CEGihbB.gif');
+    woodTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
     boxMaterial = new THREE.MeshBasicMaterial({
       map: woodTexture

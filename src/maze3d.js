@@ -2,12 +2,12 @@ import "babel-polyfill";
 
 import maze3D from './drawMaze3D.js'
 
-const ACTIONS = {
-    "UP": {x:0, y:-1},
-    "DOWN": {x:0, y:1},
-    "LEFT": {x:-1, y:0},
-    "RIGHT": {x:1 ,y:0}
-}
+const ACTIONS = [
+    {x:0, y:-1}, // UP
+    {x:0, y:1},  // DOWN
+    {x:-1, y:0}, // LEFT
+    {x:1 ,y:0}   // RIGHT
+]
 
 let sampleMaze = {
   sample1 : {
@@ -108,8 +108,8 @@ let search = function(maze, type){
       return point;
     }
 
-    for(let action of Object.keys(ACTIONS)){
-      var newPos = point.takeAction(ACTIONS[action])
+    for(let action of ACTIONS){
+      var newPos = point.takeAction(action)
       if(validatePos(copiedMaze, newPos)){
         var newPoint = new Point(newPos.x, newPos.y, point);
         queue.push(newPoint);
@@ -136,8 +136,8 @@ let astar = function(maze){
   while(openList.length !== 0){
     let q = openList.shift();
     visitedTrace.push({x:q.x, y:q.y});
-    for(let action of Object.keys(ACTIONS)){
-      var newPos = q.takeAction(ACTIONS[action])
+    for(let action of ACTIONS){
+      var newPos = q.takeAction(action)
       if(validatePos(maze.maze, newPos)){
         var newPoint = new AstarPoint(newPos.x, newPos.y, q, 0, 0);
         newPoint.g = q.g+1;
@@ -179,23 +179,123 @@ let astar = function(maze){
   }
 }
 
-let endPoint, path, maze
+let DFSMazeGenerator = function(size=33){
+  let mazeData = [];
+  for (let i = 0; i < size; i++){
+    mazeData[i] = []
+    for (let j = 0; j < size; j++){
+      mazeData[i][j] = 0;
+    }
+  }
+
+  let row = 0
+  while (row % 2 == 0) {
+    row = Math.floor(Math.random()*(size-2))+1
+  }
+
+  let col = 0
+  while (col % 2 == 0) {
+    col = Math.floor(Math.random()*(size-2))+1
+  }
+
+  mazeData[row][col] = 1;
+  recursion(row, col, mazeData);
+
+  function shuffle(){
+    let toShuffledArr = JSON.parse(JSON.stringify(ACTIONS));
+    for (let i = toShuffledArr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [toShuffledArr[i], toShuffledArr[j]] = [toShuffledArr[j], toShuffledArr[i]];
+    }
+    return toShuffledArr;
+  }
+
+  function recursion(row, col, mazeData){
+    let actions = shuffle();
+    for(let i = 0; i <actions.length; i++){
+      if(actions[i].y !== 0){
+        let nextRow = row + actions[i].y*2;
+        if(nextRow <=0 || nextRow >= size-1){
+          continue
+        }
+
+        if(mazeData[nextRow][col] !== 1){
+          mazeData[nextRow][col] = 1
+          mazeData[nextRow - actions[i].y][col] = 1
+          recursion(nextRow, col, mazeData)
+        }
+      }
+
+      if(actions[i].x !== 0){
+        let nextCol = col + actions[i].x*2;
+        if(nextCol <=0 || nextCol >= size-1){
+          continue
+        }
+
+        if(mazeData[row][nextCol] !== 1){
+          mazeData[row][nextCol] = 1
+          mazeData[row][nextCol - actions[i].x] = 1
+          recursion(row, nextCol, mazeData)
+        }
+      }
+    }
+  }
+
+  function setEntranceExit(mazeData){
+    let minDis = Math.round(size*0.6)
+    function setPoint() {
+      let tmpX = Math.floor(Math.random()*(size-2)) +1;
+      let tmpY = Math.floor(Math.random()*(size-2)) +1;
+      return {x: tmpX, y:tmpY}
+    }
+
+    var done = false
+    var entrance, exit;
+    while(!done){
+      entrance = setPoint();
+      exit = setPoint();
+      if(calManhattanDistance(entrance, exit) >= minDis &&
+        mazeData[entrance.y][entrance.x] === 1 &&
+        mazeData[exit.y][exit.x] === 1
+      ){
+        done = true;
+      }
+    }
+    return [entrance, exit]
+  }
+  var points = setEntranceExit(mazeData)
+  return {
+    maze: mazeData,
+    startPoint: points[0],
+    endPoint: points[1]
+  }
+}
+
+let endPoint, path, maze, usedMap
+
+
 
 let solveBtn = document.getElementById('solve');
 let generateBtn = document.getElementById('generate');
+let selectedMaze = document.getElementById('selectedMaze');
 let selectedAlgo = document.getElementById("algorithm");
 
 generateBtn.addEventListener('click', function(){
-  maze = maze3D("mazeCanvas", sampleMaze.sample1);
+  if(selectedMaze.value === 'default'){
+    usedMap = sampleMaze.sample1;
+  }else if(selectedMaze.value === 'dfs'){
+    usedMap = DFSMazeGenerator();
+  }
+  maze = maze3D("mazeCanvas", usedMap);
 });
 
 solveBtn.addEventListener('click', function(){
     if(selectedAlgo.value === 'bfs'){
-      endPoint = search(sampleMaze.sample1, 'bfs')
+      endPoint = search(usedMap, 'bfs')
     }else if(selectedAlgo.value === 'dfs'){
-      endPoint = search(sampleMaze.sample1, 'dfs')
+      endPoint = search(usedMap, 'dfs')
     }else if(selectedAlgo.value === 'astar'){
-      endPoint = astar(sampleMaze.sample1)
+      endPoint = astar(usedMap)
     }
 
     path = backTracking(endPoint);
