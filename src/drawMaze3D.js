@@ -33,7 +33,7 @@ export default function(canvas, maze){
     scene = new THREE.Scene();
 
     camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-    camera.position.set(0, 0, 15);
+    camera.position.set(0, 0, 25);
     scene.add(camera);
 
     THREE.ImageUtils.crossOrigin = '';
@@ -292,7 +292,6 @@ export default function(canvas, maze){
     },
     drawTrace (trace) {
       return new Promise(function(resolve, reject){
-        console.log(`You visited ${trace.length} nodes`)
         let cur = 1;
         let len = trace.length-1;
         let interval = setInterval(function(){
@@ -310,7 +309,6 @@ export default function(canvas, maze){
       })
     },
     followThePath (path) {
-      console.log(`The path is ${path.length} nodes long`)
       drawPathLine(path)
     },
     rebuildScene () {
@@ -331,7 +329,7 @@ export default function(canvas, maze){
     },
     cleanScene () {
       while(scene.children.length > 0){
-          scene.remove(scene.children[0]); 
+          scene.remove(scene.children[0]);
       }
     }
   }

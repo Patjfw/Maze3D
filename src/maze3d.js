@@ -179,7 +179,7 @@ let astar = function(maze){
   }
 }
 
-let DFSMazeGenerator = function(perfect=true, size=33, deleteNum=20){
+let DFSMazeGenerator = function(perfect=true, size=33, deleteNum=30){
   let mazeData = [];
   for (let i = 0; i < size; i++){
     mazeData[i] = []
@@ -283,6 +283,8 @@ let DFSMazeGenerator = function(perfect=true, size=33, deleteNum=20){
   }
 }
 
+
+
 let endPoint, path, maze, usedMap
 
 
@@ -291,6 +293,11 @@ let solveBtn = document.getElementById('solve');
 let generateBtn = document.getElementById('generate');
 let selectedMaze = document.getElementById('selectedMaze');
 let selectedAlgo = document.getElementById("algorithm");
+let stats = document.getElementById("stats");
+
+function updateStats(words){
+  stats.innerHTML = words;
+}
 
 generateBtn.addEventListener('click', function(){
   if(selectedMaze.value === 'default'){
@@ -318,10 +325,15 @@ solveBtn.addEventListener('click', function(){
     }
 
     path = backTracking(endPoint);
+
+
+
     maze.rebuildScene();
     maze.fixTheCamera().then(function(){
       maze.drawTrace(visitedTrace).then(function(){
         maze.followThePath(path)
+        updateStats(`Algorithm: ${selectedAlgo.value}</br>经过${visitedTrace.length}个节点。</br> 路径长度${path.length}。</br>
+          You visited ${visitedTrace.length} nodes. </br> The path is ${path.length} nodes long. </br>`)
       })
     })
 })

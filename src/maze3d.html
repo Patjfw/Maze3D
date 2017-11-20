@@ -6,27 +6,63 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Maze3D</title>
   <style>
+    #container{
+      float: left;
+    }
+    #panel {
+      float: left;
+      margin-left: 50px;
+    }
+
+    #stats {
+      margin: 20px 0;
+    }
+
+    #instruction {
+      width: 450px;
+      margin-top: 50px;
+    }
   </style>
 </head>
 <body>
-  <div id="container">
-    <canvas id="mazeCanvas" width="600px" height="600px"></canvas>
-  </div>
   <div>
-    <label>迷宫构建方式(Choose the way to build the maze):</label>
-    <select id="selectedMaze">
-      <option selected="selected" value="default">预设(default maze)</option>
-      <option value="perfect">算法构建(Perfect)</option>
-      <option value="braid">算法构建(Braid)</option>
-    </select>
-    <label>算法(algorithm to solve the maze)</label>
-    <select id="algorithm">
-      <option selected="selected" value="bfs">BFS</option>
-      <option value="dfs">DFS</option>
-      <option value="astar">A*</option>
-    </select>
-    <button id="generate">生成</button>
-    <button id="solve">解决</button>
+    <div id="container">
+      <canvas id="mazeCanvas" width="600px" height="600px"></canvas>
+    </div>
+    <div id="panel">
+      <label>迷宫构建方式(Choose the way to build the maze):</label>
+      <select id="selectedMaze">
+        <option selected="selected" value="default">预设(default maze)</option>
+        <option value="perfect">算法构建(Perfect)</option>
+        <option value="braid">算法构建(Braid)</option>
+      </select>
+      <br/>
+      <label>算法(algorithm to solve the maze)</label>
+      <select id="algorithm">
+        <option selected="selected" value="bfs">BFS</option>
+        <option value="dfs">DFS</option>
+        <option value="astar">A*</option>
+      </select>
+      <br/>
+      <button id="generate">生成(generate)</button>
+      <button id="solve">解决(solve)</button>
+
+      <div id="stats">
+
+      </div>
+
+      <div id="instruction">
+        说明：</br>
+        计算机如何生成和解决迷宫，希望这个小程序能让你有些基础的了解。</br>
+        不同的迷宫类型和算法，会带来不一样的执行效率。</br>
+        注意关注每次解决过程中经过节点的数量，以及最终路径的长度。</br>
+        动手尝试一下吧（展示功能使用Threejs完成）！</br>
+        Instruction:</br>
+        I wrote this program to illustrates some basic knowledge on maze generation and solving in Computer Science field.<br/>
+        Try to generate different kinds of maze and see how various algorithms can solve them.<br/>
+        The efficiency also an interesting part of this test. How many nodes does the program traverse? Can it gets the shortest path?
+      </div>
+    </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/88/three.min.js"></script>
   <script src="stat.min.js"></script>
